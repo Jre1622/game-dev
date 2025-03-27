@@ -78,7 +78,8 @@ let playerSpeedBoost = 0;
 let xpGems = [];
 let playerXp = 0;
 let playerLevel = 1;
-const XP_PER_LEVEL = 100;
+let gameStartTime = 0;
+let elapsedTime = 0;
 
 // --- Initialization ---
 function init() {
@@ -347,6 +348,8 @@ function update(elapsedTime) {
   updateCameraFollow();
   updateHealthBar();
   updateScoreDisplay();
+  updateTimer();
+  updateLevelUI();
 }
 
 function updateScoreDisplay() {
@@ -449,13 +452,37 @@ function updateXpGems() {
 }
 
 function checkLevelUp() {
-  if (playerXp >= XP_PER_LEVEL * playerLevel) {
+  const xpNeeded = getXpToNextLevel(playerLevel);
+  if (playerXp >= xpNeeded) {
+    playerXp -= xpNeeded; // Carry over excess XP instead of resetting to 0
     playerLevel++;
-    playerXp = 0;
     playerHealth = Math.min(playerHealth + 10, MAX_PLAYER_HEALTH);
     playerDamageBoost += 1;
     console.log(`Leveled up to ${playerLevel}!`);
   }
+}
+
+function getXpToNextLevel(currentLevel) {
+  // Base 100 XP + 20 per level (same as before)
+  return 100 + currentLevel * 20;
+}
+
+function updateTimer() {
+  elapsedTime = clock.getElapsedTime();
+  const minutes = Math.floor(elapsedTime / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor(elapsedTime % 60)
+    .toString()
+    .padStart(2, "0");
+  document.getElementById("timer").textContent = `${minutes}:${seconds}`;
+}
+
+function updateLevelUI() {
+  const xpNeeded = getXpToNextLevel(playerLevel);
+  const progress = (playerXp / xpNeeded) * 100;
+  document.getElementById("level-progress").style.width = `${Math.min(progress, 100)}%`;
+  document.getElementById("level-text").textContent = `Lvl ${playerLevel}`;
 }
 
 // --- Start the application ---
