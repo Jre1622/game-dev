@@ -19,6 +19,15 @@ export class Gun {
     this.collisionThreshold = (BULLET_RADIUS + enemyRadius) * COLLISION_THRESHOLD_BULLET_ENEMY_FACTOR;
     this.bulletGeometry = new THREE.SphereGeometry(BULLET_RADIUS, 8, 4);
     this.bulletMaterial = new THREE.MeshBasicMaterial({ color: BULLET_COLOR });
+
+    // Add audio components
+    this.audioListener = new THREE.AudioListener();
+    this.shootSound = new THREE.Audio(this.audioListener);
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load("ai-gun-shot.mp3", (buffer) => {
+      this.shootSound.setBuffer(buffer);
+      this.shootSound.setVolume(0.7); // Adjust volume as needed
+    });
   }
 
   tryShoot(elapsedTime, playerPosition, aimDirection) {
@@ -29,6 +38,12 @@ export class Gun {
     console.log("Gun Firing! Ammo left:", this.currentAmmo - 1);
     this._spawnBullet(playerPosition, aimDirection);
     this.currentAmmo--;
+
+    // Play shoot sound
+    if (this.shootSound.isPlaying) {
+      this.shootSound.stop();
+    }
+    this.shootSound.play();
 
     if (this.currentAmmo === 0) {
       this._startReload(elapsedTime);
@@ -82,7 +97,7 @@ export class Gun {
   }
 
   _updateBullets(enemies) {
-    const enemiesToRemoveIndices = [];
+    const enemiesHit = new Set();
     const bulletsToRemoveIndices = [];
 
     for (let i = this.bullets.length - 1; i >= 0; i--) {
@@ -107,11 +122,15 @@ export class Gun {
       if (!removeBullet) {
         for (let j = enemies.length - 1; j >= 0; j--) {
           const enemy = enemies[j];
-          if (!enemy) continue;
-          const distance = bullet.position.distanceTo(enemy.position);
+          if (!enemy || !enemy.mesh || typeof enemy.takeDamage !== "function") {
+            console.warn("Invalid enemy in bullet collision check:", enemy);
+            continue;
+          }
+
+          const distance = bullet.position.distanceTo(enemy.mesh.position);
           if (distance < this.collisionThreshold) {
-            if (!enemiesToRemoveIndices.includes(j)) {
-              enemiesToRemoveIndices.push(j);
+            if (enemy.takeDamage(10)) {
+              enemiesHit.add(j);
             }
             removeBullet = true;
             break;
@@ -132,6 +151,6 @@ export class Gun {
       }
     });
 
-    return enemiesToRemoveIndices;
+    return Array.from(enemiesHit);
   }
 }

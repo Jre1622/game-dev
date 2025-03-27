@@ -113,3 +113,18 @@ Create a compelling top-down survival experience featuring:
   - **Interactables:** Shrines (of Chance, Combat, Mountain), Chests, Scrappers (RoR2 inspired).
   - **Environmental Hazards:** Damaging zones, obstacles.
   - **Hidden Realms/Challenges:** Secret areas or objectives that offer unique rewards (like Lunar items or specific unlocks).
+
+```
+game-dev
+├─ README.md
+├─ ai-gun-shot.mp3
+├─ enemy.js
+├─ game.js
+├─ gun.js
+├─ index.html
+├─ item.js
+├─ package-lock.json
+├─ package.json
+└─ styles.css
+
+```
