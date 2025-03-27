@@ -1,171 +1,246 @@
 import * as THREE from "three";
+import { Gun } from "./gun.js";
 
 // --- Configuration ---
 const PLAYER_SPEED = 0.1;
-const CAMERA_VIEW_HEIGHT = 15; // How many units tall the game view is
-const GROUND_SIZE = 100; // How large the ground plane is
+const ENEMY_SPEED = 0.03;
+const CAMERA_VIEW_HEIGHT = 15;
+const GROUND_SIZE = 100;
+const SPAWN_INTERVAL = 1.0;
+const SPAWN_DISTANCE = 15;
+const PLAYER_RADIUS = 0.5;
+const ENEMY_RADIUS = 0.5;
+const COLLISION_THRESHOLD_PLAYER = PLAYER_RADIUS + ENEMY_RADIUS;
+const COLLISION_THRESHOLD_ENEMY = ENEMY_RADIUS + ENEMY_RADIUS;
+const ENEMY_SEPARATION_FORCE = 0.02;
+const PLAYER_KNOCKBACK_FORCE = 0.05;
+const PLAYER_PUSH_FORCE = 0.06;
 
-// --- Global Variables ---
+// --- Global Game State ---
 let scene, camera, renderer;
 let player;
 let groundPlane;
+let enemies = [];
 let keysPressed = {};
-let clock = new THREE.Clock(); // For potential future use (delta time)
+let clock = new THREE.Clock();
+let lastSpawnTime = 0;
+let mouseWorldPosition = new THREE.Vector3();
+let raycaster = new THREE.Raycaster();
+let pointer = new THREE.Vector2();
+let playerGun;
 
 // --- Initialization ---
 function init() {
-  // Scene
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1a1a1a); // Dark grey background
-
-  // Renderer
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
-
-  // Setup Components
+  setupScene();
+  setupRenderer();
   setupCamera();
   setupGround();
   setupPlayer();
+  setupGun();
   setupInputListeners();
-  setupResizeListener(); // Add resize listener
-
-  // Start the game loop
+  setupResizeListener();
   animate();
-  console.log("Game Initialized (Modular)");
+  console.log("Game Initialized with Modular Gun");
 }
 
-// --- Setup Functions ---
+// --- Core Setup Functions ---
+function setupScene() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1a1a);
+}
+
+function setupRenderer() {
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+}
+
 function setupCamera() {
-  const aspect = window.innerWidth / window.innerHeight;
-  const viewWidth = CAMERA_VIEW_HEIGHT * aspect;
-
-  // Orthographic Camera for 2D top-down view
-  camera = new THREE.OrthographicCamera(
-    viewWidth / -2,
-    viewWidth / 2, // left, right
-    CAMERA_VIEW_HEIGHT / 2,
-    CAMERA_VIEW_HEIGHT / -2, // top, bottom
-    0.1,
-    1000 // near, far clipping plane
-  );
-
-  // Position camera above the center, looking down
-  camera.position.set(0, 50, 0); // Positioned high on the Y-axis
-  camera.lookAt(0, 0, 0); // Looking down at the origin (XZ plane)
-  camera.zoom = 1; // Adjust zoom if needed
-  camera.updateProjectionMatrix();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, CAMERA_VIEW_HEIGHT, 0);
+  camera.lookAt(0, 0, 0);
 }
 
 function setupGround() {
   const groundGeometry = new THREE.PlaneGeometry(GROUND_SIZE, GROUND_SIZE);
-  // Simple dark material for the ground
-  const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+  const groundMaterial = new THREE.MeshBasicMaterial({
+    color: 0x333333,
+    side: THREE.DoubleSide,
+  });
   groundPlane = new THREE.Mesh(groundGeometry, groundMaterial);
-
-  // Rotate the plane to be flat on the XZ axis
   groundPlane.rotation.x = -Math.PI / 2;
-  // groundPlane.position.y = -0.01; // Optional: slightly below y=0
-
   scene.add(groundPlane);
-
-  // Optional: Add GridHelper for visual reference (on top of ground)
-  const gridHelper = new THREE.GridHelper(GROUND_SIZE, GROUND_SIZE / 2, 0x555555, 0x555555);
-  // gridHelper.position.y = 0.01; // Slightly above the ground plane
-  scene.add(gridHelper);
 }
 
+// --- Game Object Setup Functions ---
 function setupPlayer() {
-  // Using a simple Box for now
-  const playerGeometry = new THREE.BoxGeometry(1, 1, 1); // Width, Height, Depth
-  const playerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Bright Green
-  player = new THREE.Mesh(playerGeometry, playerMaterial);
-
-  // Position the player slightly above the ground plane (Y=0)
-  // Since BoxGeometry origin is center, lift by half its height
-  player.position.y = 0.5;
-
+  const geometry = new THREE.SphereGeometry(PLAYER_RADIUS, 16, 16);
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  player = new THREE.Mesh(geometry, material);
+  player.position.set(0, PLAYER_RADIUS, 0);
   scene.add(player);
 }
 
+function setupGun() {
+  playerGun = new Gun(scene, ENEMY_RADIUS);
+}
+
+// --- Listener Setup ---
 function setupInputListeners() {
-  document.addEventListener("keydown", (event) => {
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("keydown", (event) => {
     keysPressed[event.key.toLowerCase()] = true;
   });
-
-  document.addEventListener("keyup", (event) => {
+  window.addEventListener("keyup", (event) => {
     keysPressed[event.key.toLowerCase()] = false;
   });
 }
 
+function onPointerMove(event) {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+}
+
+function onPointerDown(event) {
+  if (event.button === 0 && playerGun) {
+    const aimDirection = mouseWorldPosition.clone().sub(player.position);
+    playerGun.tryShoot(clock.getElapsedTime(), player.position, aimDirection);
+  }
+}
+
 function setupResizeListener() {
   window.addEventListener("resize", () => {
-    // Update camera aspect ratio
-    const aspect = window.innerWidth / window.innerHeight;
-    const viewWidth = CAMERA_VIEW_HEIGHT * aspect;
-    camera.left = viewWidth / -2;
-    camera.right = viewWidth / 2;
-    camera.top = CAMERA_VIEW_HEIGHT / 2;
-    camera.bottom = CAMERA_VIEW_HEIGHT / -2;
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-
-    // Update renderer size
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 }
 
-// --- Game Loop & Update Logic ---
-function animate() {
-  requestAnimationFrame(animate); // Loop
-
-  // const deltaTime = clock.getDelta(); // Get time since last frame (for frame-rate independent movement) - Implement later if needed
-
-  update(); // Update game state
-
-  renderer.render(scene, camera); // Render the scene
+// --- Weapon & Bullet Logic ---
+function updateMouseWorldPosition() {
+  if (!camera || !groundPlane) return;
+  raycaster.setFromCamera(pointer, camera);
+  const intersects = raycaster.intersectObject(groundPlane);
+  if (intersects.length > 0) {
+    mouseWorldPosition.copy(intersects[0].point);
+    mouseWorldPosition.y = PLAYER_RADIUS;
+  }
 }
 
-function update() {
-  // --- Player Movement ---
-  let moveX = 0;
-  let moveZ = 0;
+// --- Enemy Logic ---
+function spawnEnemy() {
+  const geometry = new THREE.SphereGeometry(ENEMY_RADIUS, 16, 16);
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  const enemy = new THREE.Mesh(geometry, material);
+  const angle = Math.random() * Math.PI * 2;
+  const distance = SPAWN_DISTANCE;
+  enemy.position.set(player.position.x + Math.cos(angle) * distance, ENEMY_RADIUS, player.position.z + Math.sin(angle) * distance);
+  scene.add(enemy);
+  enemies.push(enemy);
+}
 
-  if (keysPressed["w"] || keysPressed["arrowup"]) {
-    moveZ = -1; // Move "forward" in negative Z direction
+function updateEnemies() {
+  if (!player) return;
+  enemies.forEach((enemy) => {
+    const direction = new THREE.Vector3().subVectors(player.position, enemy.position).normalize();
+    enemy.position.addScaledVector(direction, ENEMY_SPEED);
+    const distanceToPlayer = enemy.position.distanceTo(player.position);
+    if (distanceToPlayer < COLLISION_THRESHOLD_PLAYER) {
+      console.log("Enemy hit player!");
+      // TODO: Add player damage logic later
+    }
+    enemies.forEach((otherEnemy) => {
+      if (enemy !== otherEnemy) {
+        const distance = enemy.position.distanceTo(otherEnemy.position);
+        if (distance < COLLISION_THRESHOLD_ENEMY) {
+          const separationDirection = new THREE.Vector3().subVectors(enemy.position, otherEnemy.position).normalize();
+          enemy.position.addScaledVector(separationDirection, ENEMY_SEPARATION_FORCE);
+        }
+      }
+    });
+  });
+}
+
+// --- Player & Camera Update Logic ---
+function updatePlayerMovement() {
+  if (!player) return;
+
+  const moveDirection = new THREE.Vector3();
+
+  if (keysPressed["w"] || keysPressed["ArrowUp"]) {
+    moveDirection.z -= 1;
   }
-  if (keysPressed["s"] || keysPressed["arrowdown"]) {
-    moveZ = 1; // Move "backward" in positive Z direction
+  if (keysPressed["s"] || keysPressed["ArrowDown"]) {
+    moveDirection.z += 1;
   }
-  if (keysPressed["a"] || keysPressed["arrowleft"]) {
-    moveX = -1; // Move "left" in negative X direction
+  if (keysPressed["a"] || keysPressed["ArrowLeft"]) {
+    moveDirection.x -= 1;
   }
-  if (keysPressed["d"] || keysPressed["arrowright"]) {
-    moveX = 1; // Move "right" in positive X direction
+  if (keysPressed["d"] || keysPressed["ArrowRight"]) {
+    moveDirection.x += 1;
   }
 
-  // Normalize diagonal movement speed
-  const magnitude = Math.sqrt(moveX * moveX + moveZ * moveZ);
-  if (magnitude > 0) {
-    moveX = (moveX / magnitude) * PLAYER_SPEED;
-    moveZ = (moveZ / magnitude) * PLAYER_SPEED;
+  if (moveDirection.length() > 0) {
+    moveDirection.normalize();
   }
 
-  // Apply movement
-  player.position.x += moveX;
-  player.position.z += moveZ;
+  player.position.x += moveDirection.x * PLAYER_SPEED;
+  player.position.z += moveDirection.z * PLAYER_SPEED;
 
-  // --- Bounds Checking (Optional - keep player on the ground plane) ---
-  const bound = GROUND_SIZE / 2 - 0.5; // Half ground size minus half player size
-  player.position.x = Math.max(-bound, Math.min(bound, player.position.x));
-  player.position.z = Math.max(-bound, Math.min(bound, player.position.z));
+  const halfGround = GROUND_SIZE / 2;
+  player.position.x = Math.max(-halfGround, Math.min(halfGround, player.position.x));
+  player.position.z = Math.max(-halfGround, Math.min(halfGround, player.position.z));
+}
 
-  // --- Camera Follow ---
-  // Make the camera center follow the player's XZ position
-  camera.position.x = player.position.x;
-  camera.position.z = player.position.z;
-  // Keep the camera looking down from its fixed height (camera.position.y is already set)
-  // camera.lookAt(player.position.x, 0, player.position.z); // Ensure it looks at the player's ground position
-  // No need to call lookAt every frame if camera Y is fixed and it moves parallel to XZ plane
+function updateCameraFollow() {
+  if (player) {
+    camera.position.set(player.position.x, CAMERA_VIEW_HEIGHT, player.position.z);
+    camera.lookAt(player.position.x, 0, player.position.z);
+  }
+}
+
+// --- Main Game Loop & Update ---
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsedTime = clock.getElapsedTime();
+  update(elapsedTime);
+  renderer.render(scene, camera);
+}
+
+function update(elapsedTime) {
+  updateMouseWorldPosition();
+  updatePlayerMovement();
+  updateEnemies();
+
+  if (playerGun) {
+    const hitEnemyIndices = playerGun.update(elapsedTime, enemies) || [];
+    removeHitEnemies(hitEnemyIndices);
+  }
+
+  if (shouldSpawnEnemy(elapsedTime)) {
+    spawnEnemy();
+    lastSpawnTime = elapsedTime;
+  }
+
+  updateCameraFollow();
+}
+
+function removeHitEnemies(indices) {
+  if (!indices || !Array.isArray(indices)) return;
+
+  indices
+    .sort((a, b) => b - a)
+    .forEach((index) => {
+      if (enemies[index]) {
+        scene.remove(enemies[index]);
+        enemies.splice(index, 1);
+      }
+    });
+}
+
+function shouldSpawnEnemy(elapsedTime) {
+  return elapsedTime - lastSpawnTime > SPAWN_INTERVAL;
 }
 
 // --- Start the application ---

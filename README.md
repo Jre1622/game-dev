@@ -18,14 +18,20 @@ Create a compelling top-down survival experience featuring:
 - JavaScript (ES6+)
 - [Three.js](https://threejs.org/) (for WebGL rendering)
 
-## Setup
+## Setup (Updated)
 
-1.  Clone the repository.
-2.  Install dependencies:
-    ```bash
-    npm install three
-    ```
-3.  Open `index.html` in your web browser (or use a simple local server like `npx serve`).
+1. Clone the repository
+2. Open `index.html` directly in a modern browser (no build step needed)
+3. For development, consider using a simple static server like:
+   ```bash
+   npx serve
+   ```
+
+## Current Focus (MVP)
+
+1. Core gameplay loop (movement, shooting, enemies)
+2. Basic upgrade system
+3. Simple UI for health/ammo
 
 ## Core Development Plan (MVP++)
 
