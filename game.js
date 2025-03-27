@@ -15,6 +15,7 @@ const COLLISION_THRESHOLD_ENEMY = ENEMY_RADIUS + ENEMY_RADIUS;
 const ENEMY_SEPARATION_FORCE = 0.02;
 const PLAYER_KNOCKBACK_FORCE = 0.05;
 const PLAYER_PUSH_FORCE = 0.06;
+const MAX_PLAYER_HEALTH = 100;
 
 // --- Global Game State ---
 let scene, camera, renderer;
@@ -28,6 +29,7 @@ let mouseWorldPosition = new THREE.Vector3();
 let raycaster = new THREE.Raycaster();
 let pointer = new THREE.Vector2();
 let playerGun;
+let playerHealth = MAX_PLAYER_HEALTH;
 
 // --- Initialization ---
 function init() {
@@ -145,10 +147,16 @@ function updateEnemies() {
   enemies.forEach((enemy) => {
     const direction = new THREE.Vector3().subVectors(player.position, enemy.position).normalize();
     enemy.position.addScaledVector(direction, ENEMY_SPEED);
+
     const distanceToPlayer = enemy.position.distanceTo(player.position);
     if (distanceToPlayer < COLLISION_THRESHOLD_PLAYER) {
-      console.log("Enemy hit player!");
-      // TODO: Add player damage logic later
+      playerHealth -= 10;
+      flashPlayer();
+      console.log(`Player took damage! Health: ${playerHealth}`);
+      if (playerHealth <= 0) {
+        console.log("Player died!");
+        // TODO: Add game over logic
+      }
     }
     enemies.forEach((otherEnemy) => {
       if (enemy !== otherEnemy) {
@@ -160,6 +168,27 @@ function updateEnemies() {
       }
     });
   });
+}
+
+function flashPlayer() {
+  if (player) {
+    const originalColor = player.material.color.getHex();
+    player.material.color.set(0xff0000);
+    setTimeout(() => {
+      player.material.color.set(originalColor);
+    }, 100);
+  }
+}
+
+function updateHealthBar() {
+  const healthBar = document.getElementById("health-bar");
+  const healthText = document.getElementById("health-text");
+  if (healthBar && healthText) {
+    const healthPercentage = Math.max(0, (playerHealth / MAX_PLAYER_HEALTH) * 100);
+    healthBar.style.width = `${healthPercentage}%`;
+    healthBar.style.backgroundColor = healthPercentage > 50 ? "#0f0" : healthPercentage > 20 ? "#ff0" : "#f00";
+    healthText.textContent = `${Math.round(healthPercentage)}%`;
+  }
 }
 
 // --- Player & Camera Update Logic ---
@@ -224,6 +253,7 @@ function update(elapsedTime) {
   }
 
   updateCameraFollow();
+  updateHealthBar();
 }
 
 function removeHitEnemies(indices) {
