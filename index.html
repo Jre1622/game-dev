@@ -19,11 +19,28 @@
     <div id="timer">00:00</div>
     <div
       id="game-over"
-      style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 24px; background-color: rgba(0, 0, 0, 0.5); padding: 20px"
+      style="
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 36px;
+        background-color: rgba(0, 0, 0, 0.8);
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        min-width: 300px;
+      "
     >
-      Game Over
+      <h1 style="margin-top: 0; color: #ff3333">You Died!</h1>
+      <p>Final Score: <span id="final-score">0</span></p>
+      <p>Time Survived: <span id="final-time">00:00</span></p>
+      <button id="restart-button" style="padding: 12px 24px; font-size: 18px; background-color: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px">
+        Restart Game
+      </button>
     </div>
-    <div id="wave-info">Wave: 1</div>
     <div id="player-stats">
       <div>Damage: +0</div>
       <div>Speed: +0%</div>

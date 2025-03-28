@@ -28,7 +28,7 @@ export class Item {
     scene.add(this.mesh);
   }
 
-  applyEffect(player) {
+  applyEffect() {
     const effects = {};
     switch (this.type) {
       case "health":
