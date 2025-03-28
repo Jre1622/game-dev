@@ -493,7 +493,7 @@ function setupAudio() {
 
   backgroundMusic = new THREE.Audio(audioListener);
   const audioLoader = new THREE.AudioLoader();
-  audioLoader.load("replicate-prediction-v8rrqwvt59rj60cnv1r81z8z0w.mp3", (buffer) => {
+  audioLoader.load("replicate-prediction-jmzwr3ywedrj40cnv1nr29e18w.mp3", (buffer) => {
     backgroundMusic.setBuffer(buffer);
     backgroundMusic.setLoop(true);
     backgroundMusic.setVolume(0.5); // Adjust volume as needed

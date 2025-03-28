@@ -1,15 +1,16 @@
 # JS Survivor Clone (VS x RoR2 Inspired)
 
-A top-down survival game inspired by **Vampire Survivors** and **Risk of Rain 2**, built with HTML, CSS, JavaScript, and Three.js. Aiming for the satisfying auto-combat and upgrade loop of VS, combined with the exciting item stacking, synergies, and potential for character depth found in RoR2.
+A top-down survival game inspired by **Vampire Survivors** and **Risk of Rain 2**, built with HTML, CSS, JavaScript, and Three.js. The goal is to blend the satisfying auto-combat and escalating intensity of VS with the exciting item choices and potential for active abilities found in RoR2.
 
 ## Project Goal
 
 Create a compelling top-down survival experience featuring:
 
-- Intense wave-based combat against scaling hordes.
-- Satisfying character progression through **stacking items** and level-up upgrades.
-- Engaging combat incorporating unique features like mouse-based aiming.
-- Potential for distinct character kits and procedural world generation.
+- Intense, **continuously scaling** combat against ever-growing hordes managed by a time-based "Director" system.
+- Unique run variance through **random attribute gains** on level-up.
+- Deep strategic choices via **categorized item selections** from periodically spawning chests.
+- Engaging combat incorporating mouse-based aiming and powerful **active abilities** earned from bosses.
+- A foundation allowing for future additions like diverse enemy types and potentially distinct character kits.
 
 ## Technology Stack
 
@@ -18,113 +19,80 @@ Create a compelling top-down survival experience featuring:
 - JavaScript (ES6+)
 - [Three.js](https://threejs.org/) (for WebGL rendering)
 
-## Setup (Updated)
+## Setup
 
-1. Clone the repository
-2. Open `index.html` directly in a modern browser (no build step needed)
-3. For development, consider using a simple static server like:
-   ```bash
-   npx serve
-   ```
+1.  Clone the repository.
+2.  Open `index.html` directly in a modern browser (no build step needed).
+3.  For development, consider using a simple static server like:
+    ```bash
+    npx serve
+    ```
 
-## Current Focus (MVP)
+## Current Status & Focus
 
-1. Core gameplay loop (movement, shooting, enemies)
-2. Basic upgrade system
-3. Simple UI for health/ammo
+The foundational elements are in place:
 
-## Core Development Plan (MVP++)
+- Player movement (WASD) and camera follow.
+- Basic enemy types with "move towards player" AI.
+- Mouse aiming and click-firing projectile weapon.
+- Collision detection (Projectile-Enemy, Player-Enemy).
+- Health system for player and enemies.
+- Experience gems dropped by enemies, player leveling.
+- Basic UI (Health, Level/XP, Timer, Score).
 
-1.  **Environment & Player Movement (Done):**
+**Current Focus:** Implementing and refining the **Time-Based Enemy Spawning Director** and the core **Progression Systems (Attributes, Chests)**.
 
-    - Basic Three.js scene setup (Orthographic Camera).
-    - Ground plane/grid.
-    - Keyboard (WASD/Arrows) player movement.
-    - Camera follows player.
+## Core Gameplay Loop & Progression Systems
 
-2.  **Enemy Spawning & Basic AI:**
+We are adopting a **Vampire Survivors-style continuous scaling model** for enemy difficulty, combined with unique progression mechanics:
 
-    - Create simple enemy visuals (e.g., colored cubes/spheres).
-    - Spawn enemies periodically outside the camera view.
-    - Basic "move towards player" AI.
-    - Increase spawn rate/enemy count over time (difficulty scaling).
+1.  **Enemy Director:** A system controls enemy spawning based on **elapsed game time**. As time progresses, the Director increases spawn frequency, enemy count per spawn, enemy stats (via multipliers), and the likelihood of tougher enemy types appearing.
+2.  **XP & Leveling (Attribute Gains):**
+    - Enemies drop XP Gems upon death.
+    - Collecting XP fills a level bar.
+    - Upon **Leveling Up**, the player _automatically_ receives a small, **random boost** to one of their base attributes (e.g., Move Speed, Max HP, Crit Chance, Base Damage). This provides gradual, unpredictable stat growth each run.
+3.  **Chests (Strategic Item Choices):**
+    - Periodically (e.g., every 60-120 seconds), a **free Chest** spawns randomly near the player.
+    - Interacting with the Chest presents the player with **3 item choices**: one focused on **Health/Defense**, one on **Utility**, and one on **Damage/Offense**.
+    - The player chooses **one** item. These items provide significant power increases, new weapon behaviors (e.g., piercing, extra projectiles), or new passive systems (e.g., orbiting glaives, magnets). This is the primary way players actively shape their build.
+4.  **Bosses (Active Abilities):**
+    - At set time intervals (e.g., every 5 minutes), a powerful **Boss** enemy spawns.
+    - Defeating the boss rewards the player with an **Active Ability** mapped to the Q or E key (e.g., Blink/Dash, Temporary Shield, AoE Blast).
 
-3.  **Core Combat Loop - Mouse Aiming:**
+## Post-MVP Enhancements & Future Ideas
 
-    - **Player Aiming:** Track mouse position; orient player/weapon towards cursor.
-    - **Basic Weapon:** Simple auto-firing projectile weapon aiming at the cursor.
-    - **Collision Detection:** Projectile-Enemy and Player-Enemy collisions.
-    - **Health System:** Basic HP for player and enemies.
-
-4.  **Experience & Leveling:**
-
-    - Enemies drop experience gems.
-    - Player collects gems by proximity.
-    - Track player XP and level.
-
-5.  **Upgrade System (VS Style - Initial):**
-
-    - Upon level-up, pause and present 2-3 upgrade choices (like VS).
-    - Initial upgrades focus on core stats (Damage, Speed, Health, Fire Rate).
-
-6.  **Basic UI:**
-    - Display Health, Level/XP, Timer.
-    - Level Up / Upgrade selection screen.
-
-## Creative Enhancements & Future Ideas (RoR2 / VS Blend)
-
-- **World Structure:**
-
-  - **Endless Procedural World (VS/RoR2 Hybrid):** Generate terrain chunks infinitely. Could incorporate RoR2-style interactables (shrines, chests) or events within the endless VS format.
-  - **Stage-Based (RoR2 Style):** Survive for a time/clear waves, find/activate a "teleporter", fight a boss while it charges, then move to a new, potentially harder stage.
-  - **Large Fixed Arena:** A large map with distinct zones, secrets, or interactables.
-
-- **Items & Synergies (RoR2 Focus):**
-
-  - **Item Drops:** Enemies have a chance to drop items directly (like RoR2) in addition to XP gems.
-  - **Stacking Effects:** Items provide stat boosts or unique effects that _stack_ additively or multiplicatively (e.g., attack speed per stack, chance for chain lightning per stack). Design for powerful, emergent synergies.
-  - **Item Tiers:** Common (White), Uncommon (Green), Legendary (Red) items with increasing impact.
-  - **Equipment:** One powerful active-use item on a cooldown (like RoR2 Equipment slot).
-  - **Lunar Items (RoR2 Style):** Introduce powerful items with significant drawbacks, potentially found in hidden areas or from specific challenges.
-
-- **Combat & Abilities:**
-
-  - **Diverse Weapons/Skills:** Expand beyond simple projectiles (AoE, piercing, orbiting, melee, beams, **deployables like drones/turrets**).
-  - **Character Kits (RoR2 Style):** Design distinct characters with unique base stats and potentially 3-4 core abilities (Primary fire, Secondary fire, Utility, Special) alongside the passive item upgrades.
-  - **Active Abilities:** Implement character-specific skills or equipment abilities triggered by key presses with cooldowns.
+Once the core loop and progression systems feel solid, focus will shift:
 
 - **Enemy Variety & AI:**
 
-  - **Diverse Behaviors:** Implement RoR2-like enemy archetypes (fast melee swarmers, ranged attackers, tanky bruisers, flying units, support units that heal/buff others).
-  - **Elite Enemies:** Introduce elite versions with enhanced stats and special modifiers (e.g., burning, freezing, overloading).
-  - **Bosses:** Stage-ending bosses (if using stage structure) or timed bosses (in endless mode) with unique mechanics.
+  - Implement diverse behaviors: **Ranged attackers** (shooting projectiles), **Suicide Bombers** (fast, low HP, high damage on contact), tanky bruisers, flying units, support units. Introduce these gradually via the time-based Director.
+  - **Elite Enemies:** Introduce elite versions with enhanced stats and special modifiers (e.g., burning, freezing, overloading) appearing at later times or randomly.
 
-- **Player Progression & Meta-Progression:**
+- **Item & Ability Pool Expansion:**
 
-  - **Character Selection:** Unlock different characters with unique kits/starting items.
-  - **Meta-Upgrades (RoR2/VS):** Earn persistent currency during runs to unlock new items, characters, or permanent starting bonuses between runs.
+  - Add significantly more items to the Health, Utility, and Damage chest pools for greater variety.
+  - Design more unique Active Abilities for boss drops.
+  - Introduce item stacking mechanics where appropriate (e.g., multiple "+10% Move Speed" items stack additively).
+
+- **Combat & Weapon Variety:**
+
+  - Consider adding more base weapon types or allowing weapon swaps via Chest items (e.g., Pistol -> Uzi -> Shotgun).
+  - Expand weapon modification possibilities through chest items.
+
+- **Player Progression & Meta-Progression (Longer Term):**
+
+  - **Character Selection:** Unlock different characters with unique starting stats or minor passive effects.
+  - **Meta-Upgrades:** Earn persistent currency during runs to unlock new items (adding them to chest pools), characters, or permanent starting bonuses between runs.
 
 - **Visuals & Polish:**
 
   - Replace primitives with sprites or models.
-  - Add particle effects, shaders, sound effects, music.
+  - Add particle effects for shooting, hits, deaths, level-ups, abilities.
+  - Implement shaders for visual flair.
+  - Add sound effects and more varied music.
 
-- **Other Mechanics:**
-  - **Interactables:** Shrines (of Chance, Combat, Mountain), Chests, Scrappers (RoR2 inspired).
-  - **Environmental Hazards:** Damaging zones, obstacles.
-  - **Hidden Realms/Challenges:** Secret areas or objectives that offer unique rewards (like Lunar items or specific unlocks).
+- **Performance Optimization:**
+  - Implement **Object Pooling** for bullets, enemies, and XP gems to reduce garbage collection overhead.
+  - Continuously profile and optimize rendering and game logic.
 
-```
-game-dev
-├─ README.md
-├─ ai-gun-shot.mp3
-├─ enemy.js
-├─ game.js
-├─ gun.js
-├─ index.html
-├─ item.js
-├─ package-lock.json
-├─ package.json
-└─ styles.css
-
-```
+This revised README reflects the progression system centered around random attribute gains, categorized chest choices, and active boss abilities.
