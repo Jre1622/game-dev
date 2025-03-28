@@ -20,6 +20,9 @@ function init() {
   // Create the game state to hold all data
   gameState = new GameState();
 
+  // Make gameState globally accessible for UI elements that need to project positions
+  window.gameState = gameState;
+
   // Initialize all systems with the shared gameState
   uiManager = new UIManager(gameState);
   sceneManager = new SceneManager(gameState);
@@ -59,7 +62,7 @@ function init() {
 
 // --- Game Object Setup Functions ---
 function setupGun() {
-  gameState.playerGun = new Gun(gameState.scene, ENEMY_RADIUS);
+  gameState.playerGun = new Gun(gameState.scene, gameState, ENEMY_RADIUS);
 }
 
 // --- Main Game Loop & Update ---
@@ -85,6 +88,11 @@ function update() {
 
   // Check for spawning new entities
   spawnSystem.checkSpawning();
+
+  // Update items (floating animation)
+  gameState.items.forEach((item) => {
+    if (item.update) item.update(deltaTime);
+  });
 
   // Update collisions
   collisionSystem.updateAllCollisions();

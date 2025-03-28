@@ -10,8 +10,9 @@ const BULLET_COLOR = 0xffff00;
 const COLLISION_THRESHOLD_BULLET_ENEMY_FACTOR = 1.0;
 
 export class Gun {
-  constructor(scene, enemyRadius = 0.5) {
+  constructor(scene, gameState, enemyRadius = 0.5) {
     this.scene = scene;
+    this.gameState = gameState;
     this.bullets = [];
     this.currentAmmo = CLIP_SIZE;
     this.isReloading = false;
@@ -129,7 +130,24 @@ export class Gun {
 
           const distance = bullet.position.distanceTo(enemy.mesh.position);
           if (distance < this.collisionThreshold) {
-            if (enemy.takeDamage(10)) {
+            // Calculate damage based on player's base damage and any damage boost
+            const baseDamage = this.gameState.playerAttributes.baseDamage;
+            const damageBoost = this.gameState.playerDamageBoost || 0;
+
+            // Simplified damage calculation - base gun damage (10) + attribute damage + item boosts
+            const baseGunDamage = 10;
+            let damage = baseGunDamage + baseDamage - 1 + damageBoost;
+
+            // Apply critical hit chance
+            const critChance = this.gameState.playerAttributes.critChance || 0;
+            const isCritical = Math.random() * 100 < critChance;
+            if (isCritical) {
+              damage *= 2;
+              this.showCriticalEffect(enemy.mesh.position.clone());
+              console.log("Critical hit! Damage doubled:", damage);
+            }
+
+            if (enemy.takeDamage(damage, isCritical)) {
               enemiesHit.add(j);
             }
             removeBullet = true;
@@ -152,5 +170,34 @@ export class Gun {
     });
 
     return Array.from(enemiesHit);
+  }
+
+  showCriticalEffect(position) {
+    // Create a visual critical hit effect
+    const critGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+    const critMaterial = new THREE.MeshBasicMaterial({
+      color: 0xff0000,
+      transparent: true,
+      opacity: 0.7,
+    });
+    const critEffect = new THREE.Mesh(critGeometry, critMaterial);
+    critEffect.position.copy(position);
+    this.scene.add(critEffect);
+
+    // Animate the critical hit effect
+    let scale = 1;
+    let opacity = 0.7;
+    const critInterval = setInterval(() => {
+      scale += 0.2;
+      opacity -= 0.05;
+
+      critEffect.scale.set(scale, scale, scale);
+      critMaterial.opacity = opacity;
+
+      if (opacity <= 0) {
+        clearInterval(critInterval);
+        this.scene.remove(critEffect);
+      }
+    }, 30);
   }
 }

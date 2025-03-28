@@ -56,10 +56,9 @@ export class SpawnSystem {
     }
   }
 
-  spawnItem(position) {
-    const itemTypes = ["health", "damage", "speed"];
-    const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
-    const item = new Item(this.gameState.scene, type, position);
+  spawnItem(position, variant = "Medium Health Pack") {
+    // Only spawn health items now - no damage or speed boosts
+    const item = new Item(this.gameState.scene, "health", position, variant);
     this.gameState.items.push(item);
     return item;
   }
@@ -70,6 +69,13 @@ export class SpawnSystem {
     try {
       const xpGem = new XpGem(this.gameState.scene, position, value);
       this.gameState.xpGems.push(xpGem);
+
+      // Small chance (1%) to drop a health pack when enemy dies
+      if (Math.random() < 0.01) {
+        this.spawnItem(position.clone().add(new THREE.Vector3(0.2, 0, 0.2)), "Small Health Pack");
+        console.log("Health pack dropped!");
+      }
+
       return xpGem;
     } catch (error) {
       console.error("Failed to spawn XP gem:", error);
@@ -111,9 +117,12 @@ export class SpawnSystem {
         const itemOptions = chest.open();
         console.log("Chest opened! Options:", itemOptions);
 
-        // For now, just give a random item from the options
+        // For now, just give a random health pack from the options
         const randomOption = itemOptions[Math.floor(Math.random() * itemOptions.length)];
-        this.spawnItem(chest.position.clone());
+
+        // Create the appropriate health item based on the selected option
+        const item = new Item(this.gameState.scene, "health", chest.position.clone(), randomOption.name);
+        this.gameState.items.push(item);
 
         // Remove chest after a delay
         setTimeout(() => {
@@ -148,15 +157,6 @@ export class SpawnSystem {
     // Update and check chest interactions
     this.updateChests(deltaTime);
 
-    // Random chance to spawn items (e.g., every 30 seconds with some randomness)
-    if (Math.random() < 0.0002) {
-      // Reduced chance since we now have chests
-      const angle = Math.random() * Math.PI * 2;
-      const distance = 3 + Math.random() * 3; // Spawn closer to player than enemies
-      const x = this.gameState.player.position.x + Math.cos(angle) * distance;
-      const z = this.gameState.player.position.z + Math.sin(angle) * distance;
-      const position = new THREE.Vector3(x, 0.3, z);
-      this.spawnItem(position);
-    }
+    // Random item spawns removed - items only come from defeated enemies now
   }
 }

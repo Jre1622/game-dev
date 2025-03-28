@@ -36,18 +36,18 @@ export class Chest {
     console.log("Chest opened!");
 
     // In the future, this should:
-    // 1. Show a UI with 3 item choices
-    // 2. Let the player select one
-    // 3. Apply the chosen item effect
+    // 1. Show a UI with chest contents
+    // 2. Apply the effect
+    // Note: We're focusing only on health items now, as stats are gained through level-ups
 
     // Change appearance to indicate it's open
     this.mesh.material.color.set(0x777777);
 
-    // Return an array of the 3 options (for now just item types)
+    // Just return health options with different amounts
     return [
-      { type: "health", name: "Health Pack", description: "Restore 20 HP" },
-      { type: "damage", name: "Damage Boost", description: "+1 Damage" },
-      { type: "speed", name: "Speed Boots", description: "+5% Speed" },
+      { type: "health", name: "Small Health Pack", description: "Restore 10 HP" },
+      { type: "health", name: "Medium Health Pack", description: "Restore 20 HP" },
+      { type: "health", name: "Large Health Pack", description: "Restore 30 HP" },
     ];
   }
 

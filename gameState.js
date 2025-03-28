@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { MAX_PLAYER_HEALTH } from "./config.js";
+import { MAX_PLAYER_HEALTH, PLAYER_SPEED } from "./config.js";
 
 export class GameState {
   constructor() {
@@ -12,7 +12,16 @@ export class GameState {
     this.items = [];
     this.xpGems = [];
     this.playerGun = null;
-    this.playerHealth = MAX_PLAYER_HEALTH;
+
+    // Player base attributes
+    this.playerAttributes = {
+      maxHealth: MAX_PLAYER_HEALTH,
+      moveSpeed: PLAYER_SPEED,
+      baseDamage: 1,
+      critChance: 0, // percentage (0-100)
+    };
+
+    this.playerHealth = this.playerAttributes.maxHealth;
     this.isGameOver = false;
     this.score = 0;
     this.playerDamageBoost = 0;
@@ -28,6 +37,7 @@ export class GameState {
     this.pointer = new THREE.Vector2();
     this.audioListener = null;
     this.backgroundMusic = null;
+    this.lastLevelUpAttribute = null; // Track which attribute was last upgraded
   }
 
   setupClock() {

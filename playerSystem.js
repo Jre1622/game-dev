@@ -42,7 +42,7 @@ export class PlayerSystem {
       moveDirection.normalize();
     }
 
-    const currentSpeed = PLAYER_SPEED + (this.gameState.playerSpeedBoost || 0);
+    const currentSpeed = this.gameState.playerAttributes.moveSpeed + (this.gameState.playerSpeedBoost || 0);
     this.gameState.player.position.x += moveDirection.x * currentSpeed;
     this.gameState.player.position.z += moveDirection.z * currentSpeed;
 
@@ -84,11 +84,47 @@ export class PlayerSystem {
     if (this.gameState.playerXp >= xpNeeded) {
       this.gameState.playerXp -= xpNeeded; // Carry over excess XP instead of resetting to 0
       this.gameState.playerLevel++;
-      this.gameState.playerHealth = Math.min(this.gameState.playerHealth + 10, MAX_PLAYER_HEALTH);
-      this.gameState.playerDamageBoost += 1;
+
+      // Apply random attribute boost
+      this.applyRandomAttributeBoost();
+
       console.log(`Leveled up to ${this.gameState.playerLevel}!`);
       return true;
     }
     return false;
+  }
+
+  applyRandomAttributeBoost() {
+    // Define attributes and their boost values (simplified to flat increases)
+    const attributeBoosts = {
+      maxHealth: 5, // +5 health points
+      moveSpeed: PLAYER_SPEED * 0.01, // +1% speed (0.001 is 1% of 0.1)
+      baseDamage: 1, // +1 damage point
+      critChance: 1, // +1% crit chance
+    };
+
+    // Get all available attributes
+    const attributes = Object.keys(attributeBoosts);
+
+    // Select a random attribute to boost
+    const randomIndex = Math.floor(Math.random() * attributes.length);
+    const selectedAttribute = attributes[randomIndex];
+    const boostAmount = attributeBoosts[selectedAttribute];
+
+    // Apply the boost to the selected attribute
+    this.gameState.playerAttributes[selectedAttribute] += boostAmount;
+
+    // Store the last boosted attribute for UI display
+    this.gameState.lastLevelUpAttribute = {
+      name: selectedAttribute,
+      amount: boostAmount,
+    };
+
+    // Special handling for maxHealth (heal player when max health increases)
+    if (selectedAttribute === "maxHealth") {
+      this.gameState.playerHealth += boostAmount;
+    }
+
+    console.log(`Attribute boost: ${selectedAttribute} +${boostAmount}`);
   }
 }
