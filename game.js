@@ -80,6 +80,7 @@ let playerXp = 0;
 let playerLevel = 1;
 let gameStartTime = 0;
 let elapsedTime = 0;
+let audioListener, backgroundMusic;
 
 // --- Initialization ---
 function init() {
@@ -91,6 +92,7 @@ function init() {
   setupGun();
   setupInputListeners();
   setupResizeListener();
+  setupAudio();
   animate();
   console.log("Game Initialized with Modular Gun");
 }
@@ -483,6 +485,20 @@ function updateLevelUI() {
   const progress = (playerXp / xpNeeded) * 100;
   document.getElementById("level-progress").style.width = `${Math.min(progress, 100)}%`;
   document.getElementById("level-text").textContent = `Lvl ${playerLevel}`;
+}
+
+function setupAudio() {
+  audioListener = new THREE.AudioListener();
+  camera.add(audioListener);
+
+  backgroundMusic = new THREE.Audio(audioListener);
+  const audioLoader = new THREE.AudioLoader();
+  audioLoader.load("replicate-prediction-v8rrqwvt59rj60cnv1r81z8z0w.mp3", (buffer) => {
+    backgroundMusic.setBuffer(buffer);
+    backgroundMusic.setLoop(true);
+    backgroundMusic.setVolume(0.5); // Adjust volume as needed
+    backgroundMusic.play();
+  });
 }
 
 // --- Start the application ---
