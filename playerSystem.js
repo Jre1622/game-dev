@@ -54,6 +54,10 @@ export class PlayerSystem {
   damagePlayer(amount) {
     this.gameState.playerHealth -= amount;
     this.flashPlayer();
+
+    // Show damage number
+    this.showDamageNumber(amount);
+
     console.log(`Player took damage! Health: ${this.gameState.playerHealth}`);
     if (this.gameState.playerHealth <= 0) {
       this.gameState.isGameOver = true;
@@ -67,6 +71,55 @@ export class PlayerSystem {
       return true;
     }
     return false;
+  }
+
+  showDamageNumber(amount) {
+    if (!this.gameState.player) return;
+
+    // Create a div for the damage number
+    const damageElement = document.createElement("div");
+    damageElement.textContent = `-${Math.round(amount)}`;
+    damageElement.style.position = "absolute";
+    damageElement.style.fontWeight = "bold";
+    damageElement.style.fontSize = "20px";
+    damageElement.style.color = "#ff3333";
+    damageElement.style.textShadow = "1px 1px 2px black";
+    damageElement.style.zIndex = "100";
+    document.body.appendChild(damageElement);
+
+    // Get the screen position of the player
+    const vector = new THREE.Vector3();
+    vector.setFromMatrixPosition(this.gameState.player.matrixWorld);
+
+    // Project the 3D position to 2D screen space
+    const widthHalf = window.innerWidth / 2;
+    const heightHalf = window.innerHeight / 2;
+    vector.project(window.gameState.camera);
+    vector.x = vector.x * widthHalf + widthHalf;
+    vector.y = -(vector.y * heightHalf) + heightHalf;
+
+    // Add some random offset so multiple hits don't stack exactly
+    const randomOffsetX = (Math.random() - 0.5) * 50;
+    const randomOffsetY = (Math.random() - 0.5) * 30;
+
+    // Position the damage number
+    damageElement.style.left = `${vector.x + randomOffsetX}px`;
+    damageElement.style.top = `${vector.y + randomOffsetY}px`;
+
+    // Animate the damage number floating up and fading out
+    let opacity = 1;
+    let posY = parseInt(damageElement.style.top);
+    const fadeInterval = setInterval(() => {
+      opacity -= 0.05;
+      posY -= 1;
+      damageElement.style.opacity = opacity;
+      damageElement.style.top = `${posY}px`;
+
+      if (opacity <= 0) {
+        clearInterval(fadeInterval);
+        document.body.removeChild(damageElement);
+      }
+    }, 30);
   }
 
   flashPlayer() {

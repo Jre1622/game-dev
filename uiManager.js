@@ -1,20 +1,26 @@
 import { MAX_PLAYER_HEALTH, PLAYER_SPEED } from "./config.js";
+import { CLIP_SIZE } from "./gun.js";
 
 export class UIManager {
   constructor(gameState) {
     this.gameState = gameState;
     this.levelUpNotification = null;
     this.levelUpTimer = null;
+    this.bulletIndicators = []; // Store references to bullet indicators
   }
 
   updateHealthBar() {
     const healthBar = document.getElementById("health-bar");
-    const healthText = document.getElementById("health-text");
-    if (healthBar && healthText) {
-      const healthPercentage = Math.max(0, (this.gameState.playerHealth / this.gameState.playerAttributes.maxHealth) * 100);
+    const healthValue = document.getElementById("health-value");
+
+    if (healthBar && healthValue) {
+      const currentHealth = Math.round(this.gameState.playerHealth);
+      const maxHealth = Math.round(this.gameState.playerAttributes.maxHealth);
+      const healthPercentage = Math.max(0, (currentHealth / maxHealth) * 100);
+
       healthBar.style.width = `${healthPercentage}%`;
       healthBar.style.backgroundColor = healthPercentage > 50 ? "#0f0" : healthPercentage > 20 ? "#ff0" : "#f00";
-      healthText.textContent = `${Math.round(healthPercentage)}%`;
+      healthValue.textContent = `${currentHealth}/${maxHealth}`;
     }
   }
 
@@ -40,7 +46,6 @@ export class UIManager {
       const speedPercent = Math.round((this.gameState.playerAttributes.moveSpeed / PLAYER_SPEED) * 100);
 
       statsElement.innerHTML = `
-        <div>Max Health: ${Math.round(this.gameState.playerAttributes.maxHealth)}</div>
         <div>Damage: ${Math.round(totalBaseDamage)}${hasDamageBoost ? ` + ${itemDamage} (items)` : ""}</div>
         <div>Speed: ${speedPercent}%${hasSpeedBoost ? ` + ${Math.round((this.gameState.playerSpeedBoost / PLAYER_SPEED) * 100)}% (items)` : ""}</div>
         <div>Crit Chance: ${this.gameState.playerAttributes.critChance.toFixed(0)}%</div>
@@ -64,6 +69,14 @@ export class UIManager {
     const progress = (this.gameState.playerXp / xpNeeded) * 100;
     document.getElementById("level-progress").style.width = `${Math.min(progress, 100)}%`;
     document.getElementById("level-text").textContent = `Lvl ${this.gameState.playerLevel}`;
+  }
+
+  updateXpText() {
+    const xpText = document.getElementById("xp-text");
+    if (xpText) {
+      const xpNeeded = this.gameState.getXpToNextLevel(this.gameState.playerLevel);
+      xpText.textContent = `${Math.round(this.gameState.playerXp)}/${xpNeeded}`;
+    }
   }
 
   showLevelUpNotification() {
@@ -155,11 +168,53 @@ export class UIManager {
     }
   }
 
+  updateAmmoDisplay() {
+    const gun = this.gameState.playerGun;
+    if (!gun) return;
+
+    const ammoContainer = document.getElementById("ammo-container");
+    if (!ammoContainer) return;
+
+    // Check if clip size has changed
+    const currentClipSize = gun.maxAmmo;
+
+    // First time setup or clip size changed - recreate bullet indicators
+    if (this.bulletIndicators.length === 0 || this.bulletIndicators.length !== currentClipSize) {
+      // Clear container and references
+      ammoContainer.innerHTML = "";
+      this.bulletIndicators = [];
+
+      // Create indicators based on current clip size
+      for (let i = 0; i < currentClipSize; i++) {
+        const bullet = document.createElement("div");
+        bullet.className = i < gun.currentAmmo ? "bullet-indicator loaded" : "bullet-indicator empty";
+        ammoContainer.appendChild(bullet);
+        this.bulletIndicators.push(bullet);
+      }
+    } else {
+      // Just update existing bullets
+      for (let i = 0; i < this.bulletIndicators.length; i++) {
+        if (gun.isReloading) {
+          // All bullets pulse during reload
+          this.bulletIndicators[i].className = "bullet-indicator empty reloading";
+        } else if (i < gun.currentAmmo) {
+          // Loaded bullets
+          this.bulletIndicators[i].className = "bullet-indicator loaded";
+        } else {
+          // Empty bullets
+          this.bulletIndicators[i].className = "bullet-indicator empty";
+        }
+      }
+    }
+  }
+
   updateAllUI() {
     this.updateHealthBar();
     this.updateScoreDisplay();
     this.updateTimer();
     this.updateLevelUI();
+    this.updateXpText();
+    this.updateAmmoDisplay();
 
     // Show level up notification if attribute was just boosted
     if (this.gameState.lastLevelUpAttribute) {

@@ -23,7 +23,7 @@ export class InputHandler {
   }
 
   onPointerDown(event) {
-    if (event.button === 0 && this.gameState.playerGun) {
+    if (event.button === 0 && this.gameState.playerGun && !this.gameState.isGameOver) {
       const aimDirection = this.gameState.mouseWorldPosition.clone().sub(this.gameState.player.position);
       this.gameState.playerGun.tryShoot(this.gameState.getElapsedTime(), this.gameState.player.position, aimDirection);
     }

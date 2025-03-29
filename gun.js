@@ -1,13 +1,13 @@
 import * as THREE from "three";
 
 // --- Configuration ---
-const BULLET_SPEED = 0.3;
-const CLIP_SIZE = 6;
-const RELOAD_TIME = 1.5;
-const BULLET_RADIUS = 0.1;
-const BULLET_MAX_DISTANCE = 30;
-const BULLET_COLOR = 0xffff00;
-const COLLISION_THRESHOLD_BULLET_ENEMY_FACTOR = 1.0;
+export const BULLET_SPEED = 0.3;
+export const CLIP_SIZE = 6;
+export const RELOAD_TIME = 1.5;
+export const BULLET_RADIUS = 0.1;
+export const BULLET_MAX_DISTANCE = 30;
+export const BULLET_COLOR = 0xffff00;
+export const COLLISION_THRESHOLD_BULLET_ENEMY_FACTOR = 1.0;
 
 export class Gun {
   constructor(scene, gameState, enemyRadius = 0.5) {
@@ -15,6 +15,7 @@ export class Gun {
     this.gameState = gameState;
     this.bullets = [];
     this.currentAmmo = CLIP_SIZE;
+    this.maxAmmo = CLIP_SIZE; // Track the current max clip size
     this.isReloading = false;
     this.reloadStartTime = 0;
     this.collisionThreshold = (BULLET_RADIUS + enemyRadius) * COLLISION_THRESHOLD_BULLET_ENEMY_FACTOR;
@@ -32,7 +33,7 @@ export class Gun {
   }
 
   tryShoot(elapsedTime, playerPosition, aimDirection) {
-    if (this.isReloading || this.currentAmmo <= 0) {
+    if (this.isReloading || this.currentAmmo <= 0 || this.gameState.isGameOver) {
       return false;
     }
 
@@ -60,7 +61,7 @@ export class Gun {
   _handleReload(elapsedTime) {
     if (this.isReloading) {
       if (elapsedTime - this.reloadStartTime >= RELOAD_TIME) {
-        this.currentAmmo = CLIP_SIZE;
+        this.currentAmmo = this.maxAmmo; // Use maxAmmo instead of CLIP_SIZE
         this.isReloading = false;
         console.log(`Reload Complete - Ammo: ${this.currentAmmo}`);
       }
@@ -199,5 +200,27 @@ export class Gun {
         this.scene.remove(critEffect);
       }
     }, 30);
+  }
+
+  // Add a method to change clip size (for upgrades)
+  updateClipSize(newSize) {
+    // Store the previous clip size
+    const oldMaxAmmo = this.maxAmmo;
+
+    // Update the max ammo value
+    this.maxAmmo = newSize;
+
+    // If not reloading, add bullets to the current clip up to the new max
+    if (!this.isReloading) {
+      // Keep the same ratio of bullets if we're partially through a clip
+      const ratio = this.currentAmmo / oldMaxAmmo;
+      this.currentAmmo = Math.min(
+        Math.ceil(ratio * this.maxAmmo), // Keep roughly the same fill percentage
+        this.maxAmmo // But never more than max
+      );
+    }
+
+    // Signal that UI needs updating
+    return true;
   }
 }

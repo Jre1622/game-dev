@@ -69,7 +69,7 @@ export class Enemy {
     const distanceToPlayer = this.mesh.position.distanceTo(player.position);
     if (
       distanceToPlayer < this.radius + player.radius &&
-      currentTime - this.lastDamageTime > 0.25 // 0.25-second cooldown
+      currentTime - this.lastDamageTime > 0.1 // 0.1-second cooldown (was 0.25)
     ) {
       this.lastDamageTime = currentTime;
       return this.damage;

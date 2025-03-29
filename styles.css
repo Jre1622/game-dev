@@ -26,15 +26,17 @@ canvas {
   transition: width 0.1s ease, background-color 0.1s ease;
 }
 
-#health-text {
+#health-value {
   position: absolute;
   top: 0;
-  right: -50px;
-  width: 40px;
+  width: 200px;
   color: white;
   font-family: Arial, sans-serif;
   font-size: 16px;
   line-height: 24px;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
 }
 
 #game-over {
@@ -93,6 +95,19 @@ canvas {
   line-height: 24px;
 }
 
+#xp-text {
+  position: absolute;
+  top: 0;
+  width: 100px;
+  color: white;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  line-height: 24px;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
 #timer {
   position: absolute;
   top: 20px;
@@ -102,4 +117,46 @@ canvas {
   font-family: Arial, sans-serif;
   font-size: 20px;
   text-align: center;
+}
+
+#ammo-container {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 8px 12px;
+  border-radius: 16px;
+}
+
+.bullet-indicator {
+  width: 15px;
+  height: 30px;
+  border: 2px solid #ffcc00;
+  border-radius: 6px;
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+.bullet-indicator.loaded {
+  background-color: #ffcc00;
+}
+
+.bullet-indicator.empty {
+  background-color: transparent;
+}
+
+.bullet-indicator.reloading {
+  animation: pulse 0.5s infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
 }
